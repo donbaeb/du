@@ -1,0 +1,28 @@
+# Security Headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Hide server information
+ServerTokens Prod
+Header unset Server
+
+# Protect sensitive files
+<Files "*.csv">
+    Require all denied
+</Files>
+
+<Files "*.log">
+    Require all denied
+</Files>
+
+# URL Rewriting
+Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [QSA,L]
+
+# Disable directory browsing
+Options -Indexes
+

